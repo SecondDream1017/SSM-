@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	
+	<typeAliases>
+		<!-- 别名 -->
+		<package name="com.atguigu.ssm.model"/>
+	</typeAliases>
+
+    <!-- 加载映射文件 -->
+    <mappers>
+        <!-- 加载包下 -->
+        <package name="com.atguigu.ssm.mapper"/>
+    </mappers>
+
+</configuration>

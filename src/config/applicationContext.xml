@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+
+	xsi:schemaLocation="
+	
+	  http://www.springframework.org/schema/beans 
+	  http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	  
+	  http://www.springframework.org/schema/context
+      http://www.springframework.org/schema/context/spring-context-3.0.xsd
+ 	  
+	  http://www.springframework.org/schema/aop 
+	  http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+	  
+	  http://www.springframework.org/schema/tx
+      http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+    
+      http://www.springframework.org/schema/mvc
+      http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+      ">
+	<!-- 1.启用spring的注解扫描器 -->
+	<!-- 为了加载service层中的事务能够成功被spring管理 需要设置spring的配置文件中的注解扫描器不扫描控制层，同时设置springMVC的配置文件不扫描service层。 
+		如果不做此设置，事务无法开启 -->
+	<context:component-scan base-package="com.atguigu.ssm">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" /><!-- expression对应的是注解对象的全类名，而不是开发人员创建的控制层的全类名 -->
+	</context:component-scan>
+	<!-- 2.配置数据源 -->
+	<context:property-placeholder location="classpath:config/jdbc.properties" />
+	<bean id="c3p0datasource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="${jdbc.driverClassName}"></property>
+		<property name="jdbcUrl" value="${jdbc.url}"></property>
+		<property name="user" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+	</bean>
+	<!-- 3.配置mybatis相关的东西 -->
+	<!-- 3.1 配置mybatis核心sqlsessionfactory -->
+	<bean name="sqlsessionfactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 配置mybatis的主配置文件 -->
+		<property name="configLocation" value="classpath:config/mybatis.xml"></property>
+		<property name="dataSource" ref="c3p0datasource"></property>
+	</bean>
+	
+	
+	<!-- 3.2
+		MapperScannerConfigurer：mapper的扫描器，将包下边的mapper接口自动创建代理对象，
+		自动创建到spring容器中，bean的id是mapper的类名（首字母小写）
+	 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.atguigu.ssm.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlsessionfactory"></property>
+	</bean>
+	<!-- 4.配置事务相关得东西 -->
+	<!-- 4.1 配置事务管理器 -->
+	<bean name="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="c3p0datasource"></property>
+	</bean>
+	<!-- 4.2 配置事务的通知 配置为那种类型的方法加上事务 -->
+	<tx:advice id="tx" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED"
+				rollback-for="Exception" /><!-- 设置了rollback-for属性 那么只要出现异常（无论是否被手动捕获）都会回滚 -->
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="*" propagation="SUPPORTS" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 4.3 配置事务的切面 -->
+	<aop:config>
+		<aop:pointcut id="myPointCut" expression="execution(* com.atguigu.ssm.service.*.*(..))" />
+		<aop:advisor advice-ref="tx" pointcut-ref="myPointCut" /><!-- 这里应该是用pointcut-ref属性 
+			而不是pointcut关联切入点 -->
+	</aop:config>
+
+	<!-- 配置mybatis的转换器， 目的：通过该配置，可以使得mybatis.xml文件中不必再关联实体映射配置文件（xxxMapper.xml）了， 
+		并最终实现了dao层只需要 接口+xxxMapper.xml配置文件 原理:对于在basePackage设置的包（包括子包）下的接口类，扫描所有xxxMapper.xml文件，如果某个文件的名称空间是该接口的全名， 
+		那么存在与名称空间相同的接口将被转换成spring的BEAN，在调用 的地方通过@Autowired方式将可以注入接口实例， 我们在service实现层调用dao接口的方法时，则会自动将接口的全类名当作名称空间，方法名当作sql语句的id值，来执行 
+		对应的sql语句，并返回相应结果（因此daoimpl层就没有作用了） 结束配置之后 3.2步便可以不再配置了 -->
+	<!-- <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="sqlSessionFactory" ref="sqlsessionfactory" /> 该配置不用手动配，否则会报错，spring底层会自动注入
+		<property name="basePackage" value="scmweb.log.scmdao" />
+	</bean> -->
+
+
+</beans>

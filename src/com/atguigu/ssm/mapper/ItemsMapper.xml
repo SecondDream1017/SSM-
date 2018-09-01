@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace:命名空间,做sql隔离 -->
+<mapper namespace="com.atguigu.ssm.mapper.ItemsMapper">
+
+	<select id="getAllItems" resultType="items">
+		SELECT * FROM items
+	</select>
+
+	<select id="getItemById" parameterType="int" resultType="items">
+		SELECT * FROM items where id=#{itemId}
+	</select>
+	
+	<update id="updateItem" parameterType="items">
+		 update items
+	    	set name = #{name,jdbcType=VARCHAR},
+	      	price = #{price,jdbcType=REAL},
+	      	pic = #{pic,jdbcType=VARCHAR},
+	      	createtime = #{createtime,jdbcType=TIMESTAMP},
+	      	detail = #{detail,jdbcType=LONGVARCHAR}
+	    where id = #{id,jdbcType=INTEGER}
+	</update>
+	
+	<delete id="deleteById" parameterType="int">
+		delete from items where id=#{id}
+	</delete>
+ </mapper> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
